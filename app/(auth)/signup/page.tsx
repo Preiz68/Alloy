@@ -12,9 +12,11 @@ import image3 from "../../../public/image3.svg"
 import { FaCircleArrowRight } from "react-icons/fa6";
 import GoogleIcon from "../../../public/icons/googleicon.png"
 import GithubIcon from "../../../public/icons/githubicon.png"
+import {useRouter} from "next/navigation"
 
 const SignUpPage = () => {
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
 
   const {
     register,
@@ -27,7 +29,9 @@ const SignUpPage = () => {
   const onSubmit: SubmitHandler<signUpFormData> = async (data) => {
     try {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
+      router.push("/")
       console.log("✅ User registered:", data.email);
+
     } catch (err: any) {
       setError(err.message);
     }
@@ -36,6 +40,7 @@ const SignUpPage = () => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
+      router.push("/")
     } catch (err: any) {
       setError(err.message);
     }
@@ -44,6 +49,7 @@ const SignUpPage = () => {
   const handleGithubSignIn = async () => {
     try {
       await signInWithPopup(auth, githubProvider);
+      router.push("/")
     } catch (err: any) {
       setError(err.message);
     }

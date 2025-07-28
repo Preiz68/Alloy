@@ -8,9 +8,7 @@ import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import image1 from "../../../public/image1.svg";
-import image2 from "../../../public/image2.svg"
 import image3 from "../../../public/image3.svg"
-import image4 from "../../../public/image4.svg"
 import { FaCircleArrowRight } from "react-icons/fa6";
 import GoogleIcon from "../../../public/icons/googleicon.png"
 import GithubIcon from "../../../public/icons/githubicon.png"

@@ -1,154 +1,261 @@
+
 "use client";
 
 import Image from "next/image";
-import { auth, githubProvider, googleProvider } from "@/lib/firebase";
-import { signUpSchema, signUpFormData } from "@/schemas/signupSchema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import image1 from "../../../public/image1.svg";
-import image3 from "../../../public/image3.svg"
-import { FaCircleArrowRight } from "react-icons/fa6";
-import GoogleIcon from "../../../public/icons/googleicon.png"
-import GithubIcon from "../../../public/icons/githubicon.png"
-import {useRouter} from "next/navigation"
+import { useRouter } from "next/navigation";
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import { MdEmail, MdLock } from "react-icons/md";
+import {Space_Grotesk} from "next/font/google"
+
+import image3 from "../../../public/colorfulbackground.jpg";
+import GoogleIcon from "../../../public/icons/googleicon.png";
+import GithubIcon from "../../../public/icons/githubicon.png";
+import { auth, googleProvider, githubProvider } from "@/lib/firebase";
+import { signUpFormData, signUpSchema } from "@/schemas/signupSchema";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets:["latin"],
+  weight:["400","600","700"]
+})
 
 const SignUpPage = () => {
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter()
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, dirtyFields },
+    reset,
   } = useForm<signUpFormData>({
     resolver: zodResolver(signUpSchema),
+    mode: "onChange",
   });
 
+  const simplifyError = (message: string) => {
+    return message
+      .replace("Firebase:", "")
+      .replace(/auth\/|\(|\)/gi, "")
+      .replace(/[-_]/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/^\w/, (c) => c.toUpperCase())
+      .trim();
+  };
+
+  const handleSuccess = (message: string) => toast.success(message);
+  const handleError = (message: string) => toast.error(simplifyError(message));
+
   const onSubmit: SubmitHandler<signUpFormData> = async (data) => {
+    setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
-      router.push("/")
-      console.log("✅ User registered:", data.email);
-
+      handleSuccess("Account created successfully!🎉");
+      reset();
+      router.push("/profile-setup");
     } catch (err: any) {
-      setError(err.message);
+      handleError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleOAuth = async (provider: "google" | "github") => {
+    setIsLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
-      router.push("/")
+      await signInWithPopup(auth, provider === "google" ? googleProvider : githubProvider);
+      handleSuccess(`Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}`);
+      router.push("/profile-setup");
     } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleGithubSignIn = async () => {
-    try {
-      await signInWithPopup(auth, githubProvider);
-      router.push("/")
-    } catch (err: any) {
-      setError(err.message);
+      handleError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative w-full min-h-screen flex justify-center overflow-hidden">
-      {/* Background Image */}
-      <Image
-        src={image3}
-        alt="Background"
-        fill
-        className="object-cover"
-      />
-        <div className="relative z-10 bg-white w-full my-16 mx-8 sm:mx-16 xl:max-w-5xl rounded-lg xl:rounded-3xl shadow-violet-500 shadow-lg grid grid-cols-12 overflow-hidden p-3">
-        <div className="lg:col-span-6 cols-span-12 p-4 xl:p-8 flex flex-col">
-          <h1 className="text-3xl font-bold text-blue-700 text-shadow">Get Started Now</h1>
-           <p className="text-blue-500 text-lg mb-10">Join something that is beyound collaboration</p>
-           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="flex space-x-3">
-               <button
-               type="button"
-               className="px-3 py-2 border-2 border-blue-600 rounded-lg font-semibold"
-               onClick={handleGoogleSignIn}
-               >
-                <div className="flex justify-center items-center space-x-1">
-                  <Image
-                  src={GoogleIcon}
-                  alt="google icon"
-                   className="w-[24px]"
-                  />
-                  <p className="text-purple-600 text-lg">Sign up Google</p>
-                </div>
-               </button>
-               <button
-               type="button"
-               className="px-3 py-2 border-2 border-blue-600 rounded-lg font-semibold"
-                onClick={handleGithubSignIn}>
-                  <div className="flex justify-center items-center space-x-1">
-                  <Image
-                  src={GithubIcon}
-                  alt="github icon"
-                   className="w-[24px]"
-                  />
-                  <p className="text-purple-600 text-lg">Sign up Github</p>
-                </div>
-               </button>
-               </div>
-               <div className="my-2">
-                <label className="block text-lg text-blue-600" htmlFor="email">Email</label>
-                <input
-                className=" w-full p-2 border-b-2 border-blue-500 focus:outline-none focus:border-b-2 focus:ring-blue-600"
-                id="email"
+    <div className={`relative w-full min-h-screen flex items-center justify-center ${spaceGrotesk.className}`}>
+   
+
+     <div className="z-10 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 w-[90%] max-w-lg text-white shadow-xl"
+>
+
+        <h2 className="text-5xl font-extrabold text-center mb-6 text-purple-600">
+          SAND
+        </h2>
+
+        {/* Top OAuth (desktop only) */}
+        <div className="hidden md:block mb-6">
+          <div className="flex gap-4 mb-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleOAuth("google")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full md:rounded text-white transition cursor-pointer"
+            >
+              <Image src={GoogleIcon} alt="Google" width={20} height={20} />
+              Sign in with Google
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleOAuth("github")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full md:rounded text-white transition cursor-pointer"
+            >
+              <Image src={GithubIcon} alt="GitHub" width={20} height={20} />
+              Sign in with GitHub
+            </motion.button>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center my-6"
+          >
+            <div className="flex-grow h-px bg-white/30" />
+            <span className="mx-3 text-md text-white/70">OR</span>
+            <div className="flex-grow h-px bg-white/30" />
+          </motion.div>
+        </div>
+
+        {/* FORM */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-h-[260px]">
+          <div className="min-h-[100px]">
+            <label className="block text-sm mb-1 bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent">
+              Email
+            </label>
+            <div className="relative flex justify-center items-center">
+              <MdEmail className="absolute left-2 top-3 text-white/60 text-lg" />
+              <input
                 type="email"
-                placeholder="praiseAkoji@gmail.com"
                 autoComplete="email"
                 {...register("email")}
-                />
-                {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
-               </div>
-               <div className="mb-20">
-                <label className="block text-lg text-blue-500" htmlFor="password">Password</label>
-                <input
+                placeholder="you@example.com"
+                className={`pl-8 w-full bg-transparent border-b-2 py-2 px-2  placeholder:text-white/60 text-white focus:outline-none transition ${
+                  errors.email && dirtyFields.email
+                    ? "border-red-500"
+                    : dirtyFields.email && !errors.email
+                    ? "border-green-500"
+                    : "border-white/30"
+                }`}
+              />
+            </div>
+            <AnimatePresence>
+              {errors.email && (
+                <motion.p
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  transition={{duration:1,type:"spring",stiffness:150,damping:12}}
+                  className="text-red-300 text-sm mt-1"
+                >
+                  {errors.email.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="min-h-[100px]">
+            <label className="block text-sm mb-1 bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent">
+              Password
+            </label>
+            <div className="relative flex justify-center items-center">
+              <MdLock className="absolute left-2 top-2 text-white/60 text-lg" />
+              <input
                 type="password"
-                id="password"
-                placeholder="Happy89$"
                 autoComplete="current-password"
                 {...register("password")}
-                className=" w-full p-2 border-b-2 border-blue-500 focus:outline-none focus:border-b-2 focus:ring-blue-600"
-                />
-                   {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>}
-               </div>
-               <button type="submit" className="w-full flex justify-center items-center bg-purple-700 hover:bg-purple-600 text-white font-semibold rounded-lg py-2">SIGN UP</button>
-           </form>
-        </div>
-        <div className="col-span-6 relative w-full h-full flex justify-center items-center lg:block rounded-lg xl:rounded-3xl overflow-hidden">
-            <Image
-        src={image1}
-        alt="Background"
-        fill
-        className="object-cover"/>
-           <div className="z-20 absolute top-0 right-0 bottom-0 left-0 m-auto w-[400px] h-[400px] rounded-full flex flex-col items-center space-y-20 text-center">
-            <div className="mt-3">
-              <h1 className="text-4xl text-white font-semibold">Welcome Back</h1>
-            <p className="text-white/80 text-lg">to the hub of growth</p>
+                placeholder="••••••••"
+                className={`pl-8 w-full bg-transparent border-b-2 py-2 px-2  placeholder:text-white/60 text-white focus:outline-none transition ${
+                  errors.password && dirtyFields.password
+                    ? "border-red-500"
+                    : dirtyFields.password && !errors.password
+                    ? "border-green-500"
+                    : "border-white/30"
+                }`}
+              />
             </div>
-            <div className="space-y-2">
-              <p className="text-lg text-pink-500">Already have an account ? </p>
-            <button className="bg-white px-3 py-2 rounded-full cursor-pointer hover:border-2 hover:border-pink-400">
-              <div className="flex space-x-3 justify-center items-center">
-                 <span className="text-pink-500 font-semibold">SIGN IN</span>
-                  <FaCircleArrowRight size={25} className="text-pink-600"/>
-              </div>
-               </button>
-           
-            </div>
-           </div>
-           </div>
+            <AnimatePresence>
+              {errors.password && (
+                <motion.p
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  transition={{duration:1,type:"spring",stiffness:150,damping:12}}
+                  className="text-red-300 text-sm mt-1"
+                >
+                  {errors.password.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 hover:from-pink-600 hover:to-indigo-600 transition duration-300 text-white font-semibold py-2 rounded shadow-md active:scale-95 hover:scale-[1.02] flex items-center justify-center cursor-pointer"
+          >
+            {isLoading ? (
+              <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              "Sign Up"
+            )}
+          </button>
+        </form>
+
+        {/* Bottom OAuth (mobile only) */}
+        <div className="block md:hidden mt-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center my-4"
+          >
+            <div className="flex-grow h-px bg-white/30" />
+            <span className="mx-3 text-md text-white/70">OR</span>
+            <div className="flex-grow h-px bg-white/30" />
+          </motion.div>
+
+          <div className="flex flex-col gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleOAuth("google")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-white transition cursor-pointer"
+            >
+              <Image src={GoogleIcon} alt="Google" width={20} height={20} />
+              Sign in with Google
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleOAuth("github")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-white transition cursor-pointer"
+            >
+              <Image src={GithubIcon} alt="GitHub" width={20} height={20} />
+              Sign in with GitHub
+            </motion.button>
+          </div>
         </div>
+
+        <p className="text-sm text-white/70 mt-6 text-center">
+          Already have an account?{" "}
+          <button
+            onClick={() => router.push("/signin")}
+            className="text-white underline hover:text-purple-400 transition cursor-pointer"
+          >
+            Sign In
+          </button>
+        </p>
+      </div>
     </div>
   );
 };

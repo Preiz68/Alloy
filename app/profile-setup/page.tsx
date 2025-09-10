@@ -147,7 +147,7 @@ export default function UserOnboardingForm() {
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
-        {checkingProfile || !fadeOut ? (
+        {checkingProfile && (
           <div className="fixed inset-0 flex flex-col justify-center items-center space-y-2 bg-black/40">
             <motion.div
               className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
@@ -155,8 +155,9 @@ export default function UserOnboardingForm() {
               transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
             />
           </div>
-        ) :  (
-           <div>
+        )}
+
+           {fadeOut && <div>
             {/* Step Dots */}
             <div className="w-full flex justify-center items-center my-6">
               <div className="relative flex items-center justify-between w-full max-w-md px-4">
@@ -605,7 +606,7 @@ export default function UserOnboardingForm() {
               </div>
             )}
           </div>
-        )}
+          }
 
         {isSubmitting && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-lg flex flex-col items-center justify-center z-50">

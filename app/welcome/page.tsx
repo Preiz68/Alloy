@@ -1,75 +1,24 @@
-"use client";
+// app/welcome/page.tsx
+"use client"; // ✅ Important: makes this a client component
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { getAuth } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import useAuth from "@/hooks/useAuth";
+import { useState } from "react";
+// your firebase client config
+import { User } from "firebase/auth";
 
-export default function Welcome() {
-  const [firstName, setFirstName] = useState<string>("Developer");
-  const auth = getAuth();
-  const {user} = useAuth()
+export default function WelcomePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchName = async () => {
-      if (!user) return;
-
-      try {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists() && docSnap.data().firstName) {
-          setFirstName(docSnap.data().firstName);
-        }
-      } catch (err) {
-        console.error("Error fetching user name:", err);
-      }
-    };
-
-    fetchName();
-  }, [auth]);
-
-    const backgroundImage = "/colorfulbackground.jpg";
+  if (loading) return <div>Loading...</div>;
 
   return (
-       <div
-      className="flex justify-center w-full min-h-screen max-h-full overflow-x-clip"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
-    >
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1.2 }}
-      className="flex flex-col items-center justify-center h-screen relative overflow-hidden bg-white/70 backdrop-blur-lg text-white w-full"
-    >
-
-      {/* Glassmorphism card */}
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.3 }}
-        className="relative z-10 px-10 py-8 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl"
-      >
-        <motion.h1
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6, type: "spring", stiffness: 120 }}
-          className="text-4xl md:text-6xl font-extrabold text-center bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent"
-        >
-          Welcome {firstName} 🎉
-        </motion.h1>
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-lg md:text-xl text-center text-gray-200 mt-4"
-        >
-          You’ve successfully set up your profile 🚀
-        </motion.p>
-      </motion.div>
-    </motion.div>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-r from-purple-500 to-green-500 text-white p-6">
+      <h1 className="text-4xl font-bold mb-4">
+        Welcome {user ? user.displayName || user.email : "Guest"}!
+      </h1>
+      <p className="text-lg text-center">
+        You are now on the client-only welcome page.
+      </p>
     </div>
   );
 }

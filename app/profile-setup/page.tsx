@@ -28,6 +28,7 @@ export default function UserOnboardingForm() {
   const [step, setStep] = useState<number>(1);
   const [checkingProfile, setCheckingProfile] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [fadeOut, setFadeOut] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -52,9 +53,13 @@ export default function UserOnboardingForm() {
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists() && docSnap.data().profileCompleted) {
-          router.push("/");
-          toast.success(`Welcome Back, ${docSnap.data().firstName}`)
+          if (docSnap.exists() && docSnap.data().profileCompleted) {
+          // Fade out smoothly before redirect
+          setFadeOut(true);
+          setTimeout(() => {
+            router.replace("/");
+            toast.success(`Welcome Back, ${docSnap.data().firstName}`);
+          }, 400);
           return;
         }
         if (docSnap.exists()) {

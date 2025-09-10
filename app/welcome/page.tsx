@@ -17,13 +17,13 @@ export default function WelcomePage() {
     hidden: {},
     visible: {
       transition: {
-        staggerChildren: 0.08, // faster, subtle stagger
+        staggerChildren: 1, // faster, subtle stagger
       },
     },
   };
 
   const letter: Variants = {
-    hidden: { y: 10, opacity: 0 },
+    hidden: { y: -20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,

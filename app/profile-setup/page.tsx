@@ -54,7 +54,7 @@ export default function UserOnboardingForm() {
 
         if (docSnap.exists() && docSnap.data().profileCompleted) {
           router.push("/");
-          toast.success(`Welcome Back ${docSnap.data().firstName}`)
+          toast.success(`Welcome Back, ${docSnap.data().firstName}`)
           return;
         }
         if (docSnap.exists()) {

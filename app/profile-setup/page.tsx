@@ -58,7 +58,6 @@ export default function UserOnboardingForm() {
           setIsRedirecting(true)
             router.replace("/")
             toast.success(`Welcome Back, ${docSnap.data().firstName}`);
-          return;
         }
         if (docSnap.exists()) {
           const data = docSnap.data() as Partial<ProfileFormData>;

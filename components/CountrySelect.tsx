@@ -18,7 +18,7 @@ type Props = {
 export const CountrySelect = ({ control, name }: Props) => {
   return (
     <div className="w-full">
-      <label className="text-md font-medium mb-1 block text-white">Country</label>
+      <label className="text-md font-medium mb-1 block text-white">Country*</label>
       <Controller
         name={name}
         control={control}

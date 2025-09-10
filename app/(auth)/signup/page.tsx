@@ -1,34 +1,30 @@
-
 "use client";
 
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
+  AuthProvider,
 } from "firebase/auth";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdEmail, MdLock } from "react-icons/md";
-import {Space_Grotesk} from "next/font/google"
+import { FirebaseError } from "firebase/app";
 
-import image3 from "../../../public/colorfulbackground.jpg";
 import GoogleIcon from "../../../public/icons/googleicon.png";
 import GithubIcon from "../../../public/icons/githubicon.png";
 import { auth, googleProvider, githubProvider } from "@/lib/firebase";
 import { signUpFormData, signUpSchema } from "@/schemas/signupSchema";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets:["latin"],
-  weight:["400","600","700"]
-})
-
 const SignUpPage = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
     register,
@@ -40,28 +36,33 @@ const SignUpPage = () => {
     mode: "onChange",
   });
 
-  const simplifyError = (message: string) => {
-    return message
-      .replace("Firebase:", "")
-      .replace(/auth\/|\(|\)/gi, "")
-      .replace(/[-_]/g, " ")
-      .replace(/([a-z])([A-Z])/g, "$1 $2")
-      .replace(/^\w/, (c) => c.toUpperCase())
-      .trim();
+  const errorMessages: Record<string, string> = {
+    "auth/email-already-in-use": "This email is already registered.",
+    "auth/weak-password": "Password is too weak.",
+    "auth/invalid-email": "Invalid email format.",
+    "auth/network-request-failed": "Network error.",
+  };
+
+  const handleError = (err: unknown) => {
+    if (err instanceof FirebaseError) {
+      toast.error(errorMessages[err.code] || err.message);
+    } else {
+      toast.error("Something went wrong.");
+    }
   };
 
   const handleSuccess = (message: string) => toast.success(message);
-  const handleError = (message: string) => toast.error(simplifyError(message));
 
   const onSubmit: SubmitHandler<signUpFormData> = async (data) => {
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
-      handleSuccess("Account created successfully!🎉");
+      handleSuccess("Account created successfully! 🎉");
       reset();
+      setIsRedirecting(true);
       router.push("/profile-setup");
-    } catch (err: any) {
-      handleError(err.message);
+    } catch (err) {
+      handleError(err);
     } finally {
       setIsLoading(false);
     }
@@ -70,82 +71,75 @@ const SignUpPage = () => {
   const handleOAuth = async (provider: "google" | "github") => {
     setIsLoading(true);
     try {
-      await signInWithPopup(auth, provider === "google" ? googleProvider : githubProvider);
-      handleSuccess(`Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}`);
+      const authProvider: AuthProvider =
+        provider === "google" ? googleProvider : githubProvider;
+
+      await signInWithPopup(auth, authProvider);
+      handleSuccess(
+        `Signed up with ${provider.charAt(0).toUpperCase() + provider.slice(1)}`
+      );
+      setIsRedirecting(true);
       router.push("/profile-setup");
-    } catch (err: any) {
-      handleError(err.message);
+    } catch (err) {
+      handleError(err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const backgroundImage = "/colorfulbackground.jpg";
+
   return (
-    <div className={`relative w-full min-h-screen flex items-center justify-center ${spaceGrotesk.className}`}>
-   
-
-     <div className="z-10 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 w-[90%] max-w-lg text-white shadow-xl"
->
-
-        <h2 className="text-5xl font-extrabold text-center mb-6 text-purple-600">
-          SAND
+    <div
+      className="w-full h-screen"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Redirect Spinner */}
+      {isRedirecting ? (
+        <div className="fixed inset-0  bg-white/10 backdrop-blur-lg shadow-lg flex flex-col items-center justify-center z-50">
+          <motion.div
+            className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
+          />
+        </div>
+      ):(
+        <div className="w-full h-full bg-white/10 backdrop-blur-lg shadow-lg md:grid md:grid-cols-12 md:gap-[5%] px-4 sm:px-6 md:px-10 py-10">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-center text-white mb-8 md:mb-0 md:col-span-5 flex items-center justify-center">
+          Create an Account
         </h2>
 
-        {/* Top OAuth (desktop only) */}
-        <div className="hidden md:block mb-6">
-          <div className="flex gap-4 mb-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleOAuth("google")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full md:rounded text-white transition cursor-pointer"
-            >
-              <Image src={GoogleIcon} alt="Google" width={20} height={20} />
-              Sign in with Google
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleOAuth("github")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full md:rounded text-white transition cursor-pointer"
-            >
-              <Image src={GithubIcon} alt="GitHub" width={20} height={20} />
-              Sign in with GitHub
-            </motion.button>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center my-6"
-          >
-            <div className="flex-grow h-px bg-white/30" />
-            <span className="mx-3 text-md text-white/70">OR</span>
-            <div className="flex-grow h-px bg-white/30" />
-          </motion.div>
-        </div>
-
         {/* FORM */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-h-[260px]">
-          <div className="min-h-[100px]">
-            <label className="block text-sm mb-1 bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 flex flex-col w-full h-full md:col-span-6"
+        >
+          {/* EMAIL */}
+          <div className="w-full min-h-[100px]">
+            <label
+              htmlFor="email"
+              className="block text-sm mb-1 text-white/80"
+            >
               Email
             </label>
-            <div className="relative flex justify-center items-center">
-              <MdEmail className="absolute left-2 top-3 text-white/60 text-lg" />
+            <div className="relative">
+              <MdEmail className="absolute left-2 top-3 text-white/60" />
               <input
+                id="email"
                 type="email"
-                autoComplete="email"
                 {...register("email")}
-                placeholder="you@example.com"
-                className={`pl-8 w-full bg-transparent border-b-2 py-2 px-2  placeholder:text-white/60 text-white focus:outline-none transition ${
-                  errors.email && dirtyFields.email
+                className={`border-b-2 pl-8 pr-3 py-2 w-full bg-white/10 text-white focus:outline-none ${
+                  errors.email
                     ? "border-red-500"
-                    : dirtyFields.email && !errors.email
+                    : dirtyFields.email
                     ? "border-green-500"
-                    : "border-white/30"
+                    : "border-white/40"
                 }`}
+                placeholder="you@example.com"
               />
             </div>
             <AnimatePresence>
@@ -154,7 +148,6 @@ const SignUpPage = () => {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  transition={{duration:1,type:"spring",stiffness:150,damping:12}}
                   className="text-red-300 text-sm mt-1"
                 >
                   {errors.email.message}
@@ -163,24 +156,28 @@ const SignUpPage = () => {
             </AnimatePresence>
           </div>
 
-          <div className="min-h-[100px]">
-            <label className="block text-sm mb-1 bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent">
+          {/* PASSWORD */}
+          <div className="w-full min-h-[90px]">
+            <label
+              htmlFor="password"
+              className="block text-sm mb-1 text-white/80"
+            >
               Password
             </label>
-            <div className="relative flex justify-center items-center">
-              <MdLock className="absolute left-2 top-2 text-white/60 text-lg" />
+            <div className="relative">
+              <MdLock className="absolute left-2 top-3 text-white/60" />
               <input
+                id="password"
                 type="password"
-                autoComplete="current-password"
                 {...register("password")}
-                placeholder="••••••••"
-                className={`pl-8 w-full bg-transparent border-b-2 py-2 px-2  placeholder:text-white/60 text-white focus:outline-none transition ${
-                  errors.password && dirtyFields.password
+                className={`border-b-2 pl-8 pr-3 py-2 w-full bg-white/10 text-white focus:outline-none ${
+                  errors.password
                     ? "border-red-500"
-                    : dirtyFields.password && !errors.password
+                    : dirtyFields.password
                     ? "border-green-500"
-                    : "border-white/30"
+                    : "border-white/40"
                 }`}
+                placeholder="••••••••"
               />
             </div>
             <AnimatePresence>
@@ -189,7 +186,6 @@ const SignUpPage = () => {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  transition={{duration:1,type:"spring",stiffness:150,damping:12}}
                   className="text-red-300 text-sm mt-1"
                 >
                   {errors.password.message}
@@ -198,64 +194,67 @@ const SignUpPage = () => {
             </AnimatePresence>
           </div>
 
-          <button
+          {/* SUBMIT */}
+          <motion.button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 hover:from-pink-600 hover:to-indigo-600 transition duration-300 text-white font-semibold py-2 rounded shadow-md active:scale-95 hover:scale-[1.02] flex items-center justify-center cursor-pointer"
+            whileHover={{ scale: 1.05 }}
+            className="w-full bg-gradient-to-r cursor-pointer from-pink-500 via-purple-600 to-indigo-500 text-white font-semibold py-2 rounded shadow-md active:scale-95 hover:scale-[1.02] flex items-center justify-center"
           >
             {isLoading ? (
-              <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <motion.span
+                className="h-6 w-6 border-2 border-white border-t-transparent rounded-full"
+                initial={{ rotate: 0 }}
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+              />
             ) : (
               "Sign Up"
             )}
-          </button>
-        </form>
+          </motion.button>
 
-        {/* Bottom OAuth (mobile only) */}
-        <div className="block md:hidden mt-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center my-4"
-          >
-            <div className="flex-grow h-px bg-white/30" />
-            <span className="mx-3 text-md text-white/70">OR</span>
-            <div className="flex-grow h-px bg-white/30" />
-          </motion.div>
+          {/* OAUTH */}
+          <div className="mt-4">
+            <div className="flex items-center my-2">
+              <div className="flex-grow h-px bg-white/30" />
+              <span className="mx-3 text-md text-white/80">OR</span>
+              <div className="flex-grow h-px bg-white/30" />
+            </div>
 
-          <div className="flex flex-col gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleOAuth("google")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-white transition cursor-pointer"
-            >
-              <Image src={GoogleIcon} alt="Google" width={20} height={20} />
-              Sign in with Google
-            </motion.button>
+            <div className="flex flex-col gap-3">
+              <motion.button
+               type = "button"
+                whileHover={{ scale: 1.05 }}
+                onClick={() => handleOAuth("google")}
+                className="w-full flex items-center justify-center cursor-pointer gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-white transition"
+              >
+                <Image src={GoogleIcon} alt="Google" width={20} height={20} />
+                Sign up with Google
+              </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleOAuth("github")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-white transition cursor-pointer"
-            >
-              <Image src={GithubIcon} alt="GitHub" width={20} height={20} />
-              Sign in with GitHub
-            </motion.button>
+              <motion.button
+              type = "button"
+                whileHover={{ scale: 1.05 }}
+                onClick={() => handleOAuth("github")}
+                className="w-full flex items-center justify-center cursor-pointer gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-white transition"
+              >
+                <Image src={GithubIcon} alt="GitHub" width={20} height={20} />
+                Sign up with GitHub
+              </motion.button>
+            </div>
+
+            <p className="text-sm text-white/80 mt-6 text-center">
+              Already have an account?{" "}
+              <Link
+                href="/signin"
+                 className="text-white underline cursor-pointer hover:text-purple-400 transition"
+                >Sign In
+                </Link>
+            </p>
           </div>
-        </div>
-
-        <p className="text-sm text-white/70 mt-6 text-center">
-          Already have an account?{" "}
-          <button
-            onClick={() => router.push("/signin")}
-            className="text-white underline hover:text-purple-400 transition cursor-pointer"
-          >
-            Sign In
-          </button>
-        </p>
+        </form>
       </div>
+      )}
     </div>
   );
 };

@@ -91,7 +91,7 @@ const SignUpPage = () => {
 
   return (
     <div
-      className="w-full h-screen"
+      className="w-full min-h-screen max-h-full"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",

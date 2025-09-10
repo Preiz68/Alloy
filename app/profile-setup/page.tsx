@@ -53,7 +53,8 @@ export default function UserOnboardingForm() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists() && docSnap.data().profileCompleted) {
-          router.push("/welcome");
+          router.push("/");
+          toast.success(`Welcome Back ${docSnap.data().firstName}`)
           return;
         }
         if (docSnap.exists()) {
@@ -97,7 +98,8 @@ export default function UserOnboardingForm() {
 
       await setDoc(doc(db, "users", user.uid), finalData, { merge: true });
       toast.success("Profile saved 🚀");
-      router.push("/welcome");
+      router.push("/");
+      toast.success(`Welcome ${data.firstName}`)
     } catch (err) {
       console.error("Submission error:", err);
       toast.error("Something went wrong");

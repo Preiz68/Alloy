@@ -59,7 +59,7 @@ export default function UserOnboardingForm() {
           setTimeout(() => {
             router.replace("/");
             toast.success(`Welcome Back, ${docSnap.data().firstName}`);
-          }, 200);
+          }, 100);
           return;
         }
         if (docSnap.exists()) {

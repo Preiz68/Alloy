@@ -55,7 +55,6 @@ export default function UserOnboardingForm() {
 
           if (docSnap.exists() && docSnap.data().profileCompleted) {
           // Fade out smoothly before redirect
-          setIsRedirecting(true)
             router.replace("/")
             toast.success(`Welcome Back, ${docSnap.data().firstName}`);
         }

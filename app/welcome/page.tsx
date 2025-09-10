@@ -42,7 +42,7 @@ export default function Welcome() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.2 }}
-      className="flex flex-col items-center justify-center h-screen relative overflow-hidden bg-white/70 backdrop-blur-lg text-white"
+      className="flex flex-col items-center justify-center h-screen relative overflow-hidden bg-white/70 backdrop-blur-lg text-white w-full"
     >
 
       {/* Glassmorphism card */}

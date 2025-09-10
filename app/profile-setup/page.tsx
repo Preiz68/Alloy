@@ -26,7 +26,7 @@ const Pagequestions = [{ label: "About You" }, { label: "Interests" }, { label: 
 
 export default function UserOnboardingForm() {
   const [step, setStep] = useState<number>(1);
-  const [checkingProfile, setCheckingProfile] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [fadeOut, setFadeOut] = useState(false);
   const { user, loading } = useAuth();
@@ -55,7 +55,7 @@ export default function UserOnboardingForm() {
 
           if (docSnap.exists() && docSnap.data().profileCompleted) {
           // Fade out smoothly before redirect
-          setFadeOut(true);
+          setIsRedirecting(true)
           setTimeout(() => {
             router.replace("/");
             toast.success(`Welcome Back, ${docSnap.data().firstName}`);
@@ -68,9 +68,10 @@ export default function UserOnboardingForm() {
         }
       } catch (err: any) {
         console.error("Profile load error:", err);
+        setFadeOut(true);
         // Allow form anyway
       } finally {
-        setCheckingProfile(false);
+        setIsRedirecting(false);
       }
     };
     run();
@@ -147,7 +148,7 @@ export default function UserOnboardingForm() {
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
-        {checkingProfile && (
+        {isRedirecting && (
           <div className="fixed inset-0 flex flex-col justify-center items-center space-y-2 bg-black/40">
             <motion.div
               className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
@@ -568,7 +569,7 @@ export default function UserOnboardingForm() {
             </AnimatePresence>
 
             {/* Navigation buttons */}
-            {!checkingProfile && (
+            {!isRedirecting && (
               <div
                 className={`sticky bottom-0 left-0 right-0 flex z-10 items-center ${
                   step === 1 ? "justify-end" : "justify-between"

@@ -11,7 +11,7 @@ export default function WelcomePage() {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const letters = `${firstName || "Guest"}!`.split("");
+  const letters = `Welcome ${firstName || "Guest"}!`.split("");
 
   const container: Variants = {
     hidden: {},
@@ -86,7 +86,7 @@ export default function WelcomePage() {
         animate="visible"
         className="text-5xl md:text-7xl font-bold text-center text-white drop-shadow-[0_0_15px_rgba(0,255,255,0.5)]"
       >
-       Welcome {letters.map((char, index) => (
+       {letters.map((char, index) => (
           <motion.span key={index} variants={letter} className="inline-block">
             {char}
           </motion.span>

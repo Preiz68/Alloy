@@ -99,7 +99,7 @@ const LoginForm = () => {
 
   return (
     <div
-      className={`flex justify-center flex-col w-full min-h-screen ${spaceGrotesk.className}`}
+      className={`flex justify-center w-full min-h-screen ${spaceGrotesk.className}`}
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",
@@ -108,12 +108,13 @@ const LoginForm = () => {
     >
 
       {/* Glassmorphic Card */}
-        <h2 className="text-4xl font-extrabold text-center mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
-          Welcome Back
-        </h2>
+       
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full min-h-full bg-white/10 space-y-6 backdrop-blur-lg p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full min-h-full flex flex-col bg-white/10 space-y-6 backdrop-blur-lg p-6">
+         <h2 className="text-4xl font-extrabold text-center mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
+          Welcome Back
+        </h2>
           {/* Email */}
           <div className="min-h-[100px]">
             <label className="block text-sm mb-1 text-white/70">Email</label>

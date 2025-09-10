@@ -1,2 +1,7 @@
+[build]
+  command = "npm run build"
+  # publish directory should be removed or left empty for @netlify/plugin-nextjs
+  publish = ""
+
 [[plugins]]
-package = "@netlify/plugin-nextjs"
+  package = "@netlify/plugin-nextjs"

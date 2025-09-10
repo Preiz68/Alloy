@@ -9,10 +9,10 @@ import { toast } from "react-toastify";
 import { CountrySelect } from "@/components/CountrySelect";
 import StackSelect from "@/components/StackSelect";
 import ExperienceSelect from "@/components/ExperienceSelect";
-import TechInterestSelect from "@/components/TechInterestSelect";
 import { profileSchema, ProfileFormData } from "@/schemas/profileSchema";
 import { db } from "@/lib/firebase";
 import useAuth from "@/hooks/useAuth";
+import TechInterestSelect from "@/components/TechInterestSelect";
 import { useRouter } from "next/navigation";
 
 const ageRanges = [
@@ -45,28 +45,30 @@ export default function UserOnboardingForm() {
     resolver: zodResolver(profileSchema),
   });
 
-  // Check profile + prefill form
+  // ✅ Single effect: check profile + (if not complete) prefill form
   useEffect(() => {
     const run = async () => {
       try {
         if (!user?.uid || loading) return;
-
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
-        const docData = docSnap.data()
 
-        if (docData?.profileCompleted) {
+          if (docSnap.exists() && docSnap.data().profileCompleted) {
+          // Fade out smoothly before redirect
           setFadeOut(true);
           setTimeout(() => {
             router.replace("/");
-            toast.success(`Welcome Back, ${docData.firstName}`);
-          }, 400);
+            toast.success(`Welcome Back, ${docSnap.data().firstName}`);
+          }, 200);
           return;
         }
-
-        if (docData) reset(docData as any);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as Partial<ProfileFormData>;
+          reset(data as any);
+        }
       } catch (err: any) {
         console.error("Profile load error:", err);
+        // Allow form anyway
       } finally {
         setCheckingProfile(false);
       }
@@ -89,26 +91,20 @@ export default function UserOnboardingForm() {
         return;
       }
 
-      const techInterests = data.techInterests
-        ? data.techInterests.map((o: any) => o?.value ?? o)
-        : [];
-      const stack = data.stack
-        ? Array.isArray(data.stack)
-          ? data.stack.map((o: any) => o?.value ?? o)
-          : data.stack
-        : [];
+      const techInterests = data.techInterests ? data.techInterests.map((o: any) => o.value ?? o) : [];
+      const stack = data.stack ? (Array.isArray(data.stack) ? data.stack.map((o: any) => o.value ?? o) : data.stack) : [];
 
       const finalData = {
         ...data,
         techInterests,
         stack,
-         profileCompleted: true,
-      }
+        profileCompleted: true,
+      };
 
       await setDoc(doc(db, "users", user.uid), finalData, { merge: true });
       toast.success("Profile saved 🚀");
       router.push("/");
-      toast.success(`Welcome ${data.firstName}`);
+      toast.success(`Welcome ${data.firstName}`)
     } catch (err) {
       console.error("Submission error:", err);
       toast.error("Something went wrong");
@@ -148,19 +144,10 @@ export default function UserOnboardingForm() {
   return (
     <div
       className="flex justify-center w-full min-h-screen max-h-full overflow-x-clip"
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+      style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
     >
-      <motion.form
-        onSubmit={handleSubmit(onSubmit)}
-        className="w-full h-full bg-white/10 backdrop-blur-lg"
-        initial={{ opacity: 1 }}
-        animate={{ opacity: fadeOut ? 0 : 1 }}
-      >
-        {checkingProfile ? (
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
+        {checkingProfile || !fadeOut ? (
           <div className="fixed inset-0 flex flex-col justify-center items-center space-y-2 bg-black/40">
             <motion.div
               className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
@@ -168,8 +155,8 @@ export default function UserOnboardingForm() {
               transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
             />
           </div>
-        ) : (
-          <div>
+        ) :  (
+           <div>
             {/* Step Dots */}
             <div className="w-full flex justify-center items-center my-6">
               <div className="relative flex items-center justify-between w-full max-w-md px-4">
@@ -227,9 +214,7 @@ export default function UserOnboardingForm() {
                 {step === 1 && (
                   <div className="grid grid-cols-1 md:grid-cols-12 md:gap-8 text-white">
                     <div className="mb-4 md:col-span-5">
-                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-                        About You
-                      </h1>
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4">About You</h1>
                       <p className="text-base sm:text-lg font-semibold text-white/80">
                         Tell us a bit about yourself so we can help you get the best out of this community.
                       </p>
@@ -254,7 +239,7 @@ export default function UserOnboardingForm() {
                           }`}
                         />
                         <AnimatePresence>
-                          {errors.firstName?.message && (
+                          {errors.firstName && (
                             <motion.p
                               className="text-sm text-red-500"
                               initial={{ opacity: 0, y: 5 }}
@@ -262,7 +247,7 @@ export default function UserOnboardingForm() {
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.firstName?.message as any}
+                              {errors.firstName.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
@@ -287,7 +272,7 @@ export default function UserOnboardingForm() {
                           }`}
                         />
                         <AnimatePresence>
-                          {errors.lastName?.message && (
+                          {errors.lastName && (
                             <motion.p
                               className="text-sm text-red-500"
                               initial={{ opacity: 0, y: 5 }}
@@ -295,35 +280,28 @@ export default function UserOnboardingForm() {
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.lastName?.message as any}
+                              {errors.lastName.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
                       </div>
 
                       {/* Gender */}
-                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="gender" className="text-md font-medium">
-                          Gender*
-                        </label>
-                        <select
-                          id="gender"
-                          {...register("gender")}
-                          className={`border-b-2 px-3 py-2 w-full bg-white/10 text-white focus:outline-none ${
-                            errors.gender
-                              ? "border-red-500"
-                              : dirtyFields.gender
-                              ? "border-green-500"
-                              : "border-white/40"
-                          }`}
-                        >
-                          <option value="">Select Gender</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
-                        </select>
+                      <div className="flex flex-col space-y-2 relative min-h-[105px]">
+                        <label className="text-md font-medium">Gender*</label>
+                        <div className="flex items-center gap-3">
+                          {["male", "female"].map((g) => (
+                            <label
+                              key={g}
+                              className="flex items-center gap-2 border-2 px-6 py-2 rounded-full border-white/40 cursor-pointer"
+                            >
+                              <input type="radio" value={g} {...register("gender")} className="accent-purple-600" />
+                              <span>{g.charAt(0).toUpperCase() + g.slice(1)}</span>
+                            </label>
+                          ))}
+                        </div>
                         <AnimatePresence>
-                          {errors.gender?.message && (
+                          {errors.gender && (
                             <motion.p
                               className="text-sm text-red-500"
                               initial={{ opacity: 0, y: 5 }}
@@ -331,20 +309,17 @@ export default function UserOnboardingForm() {
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.gender?.message as any}
+                              {errors.gender.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
                       </div>
 
-                      {/* Country */}
-                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="country" className="text-md font-medium">
-                          Country*
-                        </label>
+                      {/* Country Select */}
+                      <div className="flex flex-col space-y-2 min-h-[105px]">
                         <CountrySelect control={control} name="country" />
                         <AnimatePresence>
-                          {errors.country?.message && (
+                          {errors.country && (
                             <motion.p
                               className="text-sm text-red-500"
                               initial={{ opacity: 0, y: 5 }}
@@ -352,41 +327,47 @@ export default function UserOnboardingForm() {
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.country?.message as any}
+                              {errors.country.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
                       </div>
 
                       {/* Age */}
-                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="age" className="text-md font-medium">
-                          Age*
-                        </label>
-                        <select
-                          id="age"
-                          {...register("age")}
-                          className={`border-b-2 px-3 py-2 w-full bg-white/10 text-white focus:outline-none ${
-                            errors.age ? "border-red-500" : dirtyFields.age ? "border-green-500" : "border-white/40"
-                          }`}
-                        >
-                          <option value="">Select Age Range</option>
-                          {ageRanges.map((range) => (
-                            <option key={range.value} value={range.value}>
-                              {range.label}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="flex flex-col space-y-2 min-h-[120px]">
+                        <label className="block text-md font-medium mb-2">Select Your Age*</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {ageRanges.map((range) => {
+                            const isActive = watch("age") === range.value;
+                            return (
+                              <motion.button
+                                key={range.value}
+                                type="button"
+                                onClick={() => setValue("age", range.value, { shouldValidate: true })}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`rounded-full px-4 py-2 text-sm border shadow-sm focus:outline-none ${
+                                  isActive
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white border-transparent shadow-md"
+                                    : "border-white/40 text-white bg-white/10 hover:border-white/70"
+                                }`}
+                                aria-pressed={isActive}
+                              >
+                                {range.label}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
                         <AnimatePresence>
-                          {errors.age?.message && (
+                          {errors.age && (
                             <motion.p
-                              className="text-sm text-red-500"
+                              className="text-sm text-red-500 mt-1"
                               initial={{ opacity: 0, y: 5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.age?.message as any}
+                              {errors.age.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
@@ -397,23 +378,43 @@ export default function UserOnboardingForm() {
 
                 {/* Step 2: Interests */}
                 {step === 2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-12 md:gap-8 text-white">
+                  <div className="grid grid-cols-1 md:grid-cols-12 md:gap-8">
                     <div className="mb-4 md:col-span-5">
-                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">
                         Interests
                       </h1>
                       <p className="text-base sm:text-lg font-semibold text-white/80">
-                        Select your tech interests to help us customize your experience.
+                        Let us know what you're passionate about so we can match you with the right people and
+                        opportunities.
                       </p>
                     </div>
+
                     <div className="md:col-span-6 flex flex-col space-y-4 mt-4 max-w-md">
+                      {/* Tech Interests */}
                       <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="techInterests" className="text-md font-medium">
-                          Tech Interests*
-                        </label>
+                        <label className="text-md font-medium text-white">Tech Interests*</label>
                         <TechInterestSelect control={control} />
                         <AnimatePresence>
-                          {errors.techInterests?.message && (
+                          {errors.techInterests && (
+                            <motion.p
+                              className="text-sm text-red-500 mt-1"
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {errors.techInterests.message as any}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Stack (Optional) */}
+                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
+                        <label className="text-md font-medium text-white">Tech Stack (Optional)</label>
+                        <StackSelect control={control} />
+                        <AnimatePresence>
+                          {errors.stack && (
                             <motion.p
                               className="text-sm text-red-500"
                               initial={{ opacity: 0, y: 5 }}
@@ -421,10 +422,47 @@ export default function UserOnboardingForm() {
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.techInterests?.message as any}
+                              {errors.stack.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
+                      </div>
+
+                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
+                        <label className="text-md font-medium text-white">
+                          Hobbies or Non-Tech Interests (optional)
+                        </label>
+                        <input
+                          type="text"
+                          {...register("hobbies")}
+                          className="border-2 border-white/40 bg-white/10 text-white px-3 py-2 rounded-lg focus:outline-none"
+                          placeholder="e.g. Music, Cooking, Writing..."
+                        />
+                        <AnimatePresence>
+                          {errors.hobbies && (
+                            <motion.p
+                              className="text-sm text-red-500"
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {errors.hobbies.message as any}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      <div className="flex flex-col w-full space-y-2 relative">
+                        <label className="text-md font-medium text-white">Short Bio (optional)</label>
+                        <textarea
+                          rows={4}
+                          maxLength={250}
+                          {...register("bio")}
+                          className="border-2 border-white/40 bg-white/10 text-white px-3 py-2 rounded-lg focus:outline-none resize-none"
+                          placeholder="Tell us a little about yourself in 250 characters..."
+                        />
+                        <div className="text-sm text-white/70 text-right">{watch("bio")?.length || 0}/250</div>
                       </div>
                     </div>
                   </div>
@@ -432,38 +470,74 @@ export default function UserOnboardingForm() {
 
                 {/* Step 3: Experience */}
                 {step === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-12 md:gap-8 text-white">
+                  <div className="grid grid-cols-1 md:grid-cols-12 md:gap-8">
                     <div className="mb-4 md:col-span-5">
-                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">
                         Experience
                       </h1>
                       <p className="text-base sm:text-lg font-semibold text-white/80">
-                        Tell us about your career path and tech stack.
+                        Share your professional experience so we can better support your growth.
                       </p>
                     </div>
-                    <div className="md:col-span-6 flex flex-col space-y-4 mt-4 max-w-md">
-                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="stack" className="text-md font-medium">
-                          Tech Stack
-                        </label>
-                        <StackSelect control={control}/>
-                      </div>
 
-                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="experienceLevel" className="text-md font-medium">
-                          Experience Level
-                        </label>
+                    <div className="md:col-span-6 flex flex-col space-y-6 mt-4 max-w-md">
+                      {/* Experience */}
+                      <div className="min-h-[105px] flex flex-col w-full space-y-2">
+                        <label className="text-md font-medium text-white">Experience*</label>
                         <ExperienceSelect control={control} />
+                        <AnimatePresence>
+                          {errors.experienceLevel && (
+                            <motion.p
+                              className="text-sm text-red-500"
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {errors.experienceLevel.message as any}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
                       </div>
 
+                      {/* LinkedIn URL */}
                       <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
-                        <label htmlFor="careerPath" className="text-md font-medium">
-                          Career Path*
-                        </label>
+                        <label className="text-md font-medium text-white">LinkedIn URL (Optional)</label>
                         <input
-                          id="careerPath"
-                          type="text"
+                          {...register("linkedInUrl")}
+                          type="url"
+                          placeholder="https://linkedin.com/in/username"
+                          aria-invalid={!!errors.linkedInUrl}
+                          className={`border-b-2 px-3 py-2 w-full bg-white/10 text-white focus:outline-none ${
+                            errors.linkedInUrl
+                              ? "border-red-500"
+                              : dirtyFields.linkedInUrl
+                              ? "border-green-500"
+                              : "border-white/40"
+                          }`}
+                        />
+                        <AnimatePresence>
+                          {errors.linkedInUrl && (
+                            <motion.p
+                              className="text-sm text-red-500"
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {errors.linkedInUrl?.message as any}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Career Path */}
+                      <div className="flex flex-col w-full space-y-2 relative min-h-[105px]">
+                        <label className="text-md font-medium text-white">Career Path*</label>
+                        <input
                           {...register("careerPath")}
+                          placeholder="Your desired career path"
+                          aria-invalid={!!errors.careerPath}
                           className={`border-b-2 px-3 py-2 w-full bg-white/10 text-white focus:outline-none ${
                             errors.careerPath
                               ? "border-red-500"
@@ -473,7 +547,7 @@ export default function UserOnboardingForm() {
                           }`}
                         />
                         <AnimatePresence>
-                          {errors.careerPath?.message && (
+                          {errors.careerPath && (
                             <motion.p
                               className="text-sm text-red-500"
                               initial={{ opacity: 0, y: 5 }}
@@ -481,7 +555,7 @@ export default function UserOnboardingForm() {
                               exit={{ opacity: 0, y: 5 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {errors.careerPath?.message as any}
+                              {errors.careerPath.message as any}
                             </motion.p>
                           )}
                         </AnimatePresence>
@@ -543,7 +617,7 @@ export default function UserOnboardingForm() {
             <p className="mt-3 text-sm text-white">Saving Profile</p>
           </div>
         )}
-      </motion.form>
+      </form>
     </div>
   );
 }

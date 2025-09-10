@@ -91,7 +91,7 @@ const SignUpPage = () => {
 
   return (
     <div
-  className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-10 py-10"
+  className="w-full h-screen flex items-center justify-center"
   style={{
     backgroundImage: `url(${backgroundImage})`,
     backgroundSize: "cover",
@@ -107,18 +107,18 @@ const SignUpPage = () => {
       />
     </div>
   ) : (
-    <div className="w-full max-w-6xl bg-white/10 backdrop-blur-lg shadow-lg rounded-lg flex flex-col md:flex-row gap-10 p-6 md:p-10">
+    <div className="w-full h-full bg-white/10 backdrop-blur-lg shadow-lg md:grid md:grid-cols-12 md:gap-[5%] px-6 sm:px-8 md:px-10 py-10">
       
       {/* TITLE */}
-      <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white text-center md:text-left flex-1 flex items-center justify-center">
+       <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-center text-white mb-8 md:mb-0 md:col-span-5 flex items-center justify-center">
         Create an Account
       </h2>
 
       {/* FORM */}
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex-1 flex flex-col space-y-4"
-      >
+          <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-3 flex flex-col justify-center md:col-span-5 w-full max-w-md mx-auto"
+        >
         {/* EMAIL */}
         <div className="w-full min-h-[90px]">
           <label className="block text-sm mb-1 text-white/80">Email</label>
@@ -231,7 +231,7 @@ const SignUpPage = () => {
             </motion.button>
           </div>
 
-          <p className="text-sm text-white/80 mt-6 text-center md:text-left">
+          <p className="text-sm text-white/80 mt-6 text-center">
             Already have an account?{" "}
             <Link
               href="/signin"

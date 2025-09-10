@@ -1,4 +1,96 @@
-<div
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  AuthProvider,
+} from "firebase/auth";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import { MdEmail, MdLock } from "react-icons/md";
+import { FirebaseError } from "firebase/app";
+
+import GoogleIcon from "../../../public/icons/googleicon.png";
+import GithubIcon from "../../../public/icons/githubicon.png";
+import { auth, googleProvider, githubProvider } from "@/lib/firebase";
+import { signUpFormData, signUpSchema } from "@/schemas/signupSchema";
+
+const SignUpPage = () => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, dirtyFields },
+    reset,
+  } = useForm<signUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    mode: "onChange",
+  });
+
+  const errorMessages: Record<string, string> = {
+    "auth/email-already-in-use": "This email is already registered.",
+    "auth/weak-password": "Password is too weak.",
+    "auth/invalid-email": "Invalid email format.",
+    "auth/network-request-failed": "Network error.",
+  };
+
+  const handleError = (err: unknown) => {
+    if (err instanceof FirebaseError) {
+      toast.error(errorMessages[err.code] || err.message);
+    } else {
+      toast.error("Something went wrong.");
+    }
+  };
+
+  const handleSuccess = (message: string) => toast.success(message);
+
+  const onSubmit: SubmitHandler<signUpFormData> = async (data) => {
+    setIsLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, data.email, data.password);
+      handleSuccess("Account created successfully! 🎉");
+      reset();
+      setIsRedirecting(true);
+      router.push("/profile-setup");
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOAuth = async (provider: "google" | "github") => {
+    setIsLoading(true);
+    try {
+      const authProvider: AuthProvider =
+        provider === "google" ? googleProvider : githubProvider;
+
+      await signInWithPopup(auth, authProvider);
+      handleSuccess(
+        `Signed up with ${provider.charAt(0).toUpperCase() + provider.slice(1)}`
+      );
+      setIsRedirecting(true);
+      router.push("/profile-setup");
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const backgroundImage = "/colorfulbackground.jpg";
+
+  return (
+    <div
   className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-10 py-10"
   style={{
     backgroundImage: `url(${backgroundImage})`,
@@ -153,3 +245,8 @@
     </div>
   )}
 </div>
+
+  );
+};
+
+export default SignUpPage;

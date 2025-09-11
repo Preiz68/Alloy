@@ -110,12 +110,12 @@ const SignUpPage = () => {
     <div className="w-full h-full bg-white/10 backdrop-blur-lg shadow-lg md:grid md:grid-cols-12 md:gap-[5%] px-6 sm:px-8 md:px-10 py-10">
       
       {/* TITLE */}
-       <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-center text-white mb-8 md:mb-0 md:col-span-5 flex items-center justify-center">
+     <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-center text-white mb-8 md:mb-0 md:col-span-5 flex items-center justify-center">
         Create an Account
       </h2>
 
       {/* FORM */}
-          <form
+        <form
           onSubmit={handleSubmit(onSubmit)}
           className="space-y-3 flex flex-col justify-center md:col-span-5 w-full max-w-md mx-auto"
         >
@@ -231,7 +231,7 @@ const SignUpPage = () => {
             </motion.button>
           </div>
 
-          <p className="text-sm text-white/80 mt-6 text-center">
+          <p className="text-sm text-white/80 mt-6 text-center md:text-left">
             Already have an account?{" "}
             <Link
               href="/signin"

@@ -26,9 +26,10 @@ const Pagequestions = [{ label: "About You" }, { label: "Interests" }, { label: 
 
 export default function UserOnboardingForm() {
   const [step, setStep] = useState<number>(1);
-  const [isRedirecting, setIsRedirecting] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const { user, loading } = useAuth();
+  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
   const {
@@ -43,6 +44,15 @@ export default function UserOnboardingForm() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
   });
+
+
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // ✅ only render after mount
+  
 
   // ✅ Single effect: check profile + (if not complete) prefill form
   useEffect(() => {
@@ -137,14 +147,27 @@ export default function UserOnboardingForm() {
 
   const backgroundImage = "/colorfulbackground.jpg";
 
+  if (!isClient) {
+    return (
+       <div className="fixed inset-0 flex justify-center items-center bg-black/10 backdrop-blur-lg z-50">
+            <motion.div
+              className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
+            />
+          </div>
+    );
+  }
+
   return (
     <div
       className="flex justify-center w-full min-h-screen max-h-full overflow-x-clip"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      style={{ backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center" }}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
-        {isRedirecting ? (
-          <div className="fixed inset-0 flex flex-col justify-center items-center space-y-2 bg-black/40">
+      {isRedirecting ? (
+          <div className="fixed inset-0 flex justify-center items-center bg-black/10 backdrop-blur-lg z-50">
             <motion.div
               className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
               animate={{ rotate: 360 }}
@@ -152,8 +175,8 @@ export default function UserOnboardingForm() {
             />
           </div>
         ):
-
-          ( <div>
+      (<form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
+          <div>
             {/* Step Dots */}
             <div className="w-full flex justify-center items-center my-6">
               <div className="relative flex items-center justify-between w-full max-w-md px-4">
@@ -602,7 +625,6 @@ export default function UserOnboardingForm() {
               </div>
             )}
           </div>
-          )}
         {isSubmitting && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-lg flex flex-col items-center justify-center z-50">
             <motion.div
@@ -613,7 +635,8 @@ export default function UserOnboardingForm() {
             <p className="mt-3 text-sm text-white">Saving Profile</p>
           </div>
         )}
-      </form>
+      </form>)
+}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import { MdEmail, MdLock } from "react-icons/md";
 import Image from "next/image";
 import Link from "next/link";
 import { FirebaseError } from "firebase/app";
-
+import { useEffect } from "react";
 import GoogleIcon from "../../../public/icons/googleicon.png";
 import GithubIcon from "../../../public/icons/githubicon.png";
 
@@ -27,7 +27,16 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+
+  
+    useEffect(() => {
+      setIsClient(true);
+    }, []);
+  
+   
+  
 
   const {
     register,
@@ -88,6 +97,19 @@ const LoginForm = () => {
   };
 
   const backgroundImage = "/colorfulbackground.jpg";
+
+   // ✅ only render after mount
+    if (!isClient) {
+      return (
+         <div className="fixed inset-0 flex justify-center items-center bg-black/10 backdrop-blur-lg z-50">
+              <motion.div
+                className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
+              />
+            </div>
+      );
+    }
 
   return (
     <div

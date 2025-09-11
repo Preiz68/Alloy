@@ -144,7 +144,7 @@ export default function UserOnboardingForm() {
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
-        {isRedirecting && (
+        {isRedirecting || fadeOut && (
           <div className="fixed inset-0 flex flex-col justify-center items-center space-y-2 bg-black/40">
             <motion.div
               className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"

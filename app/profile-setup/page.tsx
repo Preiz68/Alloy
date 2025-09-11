@@ -28,7 +28,6 @@ export default function UserOnboardingForm() {
   const [step, setStep] = useState<number>(1);
   const [isRedirecting, setIsRedirecting] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [fadeOut, setFadeOut] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -55,6 +54,7 @@ export default function UserOnboardingForm() {
 
           if (docSnap.exists() && docSnap.data().profileCompleted) {
           // Fade out smoothly before redirect
+          setIsRedirecting(true)
             router.replace("/")
             toast.success(`Welcome Back, ${docSnap.data().firstName}`);
         }
@@ -64,7 +64,6 @@ export default function UserOnboardingForm() {
         }
       } catch (err: any) {
         console.error("Profile load error:", err);
-        setFadeOut(true);
         // Allow form anyway
       } finally {
         setIsRedirecting(false);
@@ -144,7 +143,7 @@ export default function UserOnboardingForm() {
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="w-full h-full bg-white/10 backdrop-blur-lg">
-        {isRedirecting || fadeOut && (
+        {isRedirecting ? (
           <div className="fixed inset-0 flex flex-col justify-center items-center space-y-2 bg-black/40">
             <motion.div
               className="w-12 h-12 border-4 border-white border-t-transparent rounded-full"
@@ -152,9 +151,9 @@ export default function UserOnboardingForm() {
               transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
             />
           </div>
-        )}
+        ):
 
-           {fadeOut && <div>
+          ( <div>
             {/* Step Dots */}
             <div className="w-full flex justify-center items-center my-6">
               <div className="relative flex items-center justify-between w-full max-w-md px-4">
@@ -603,8 +602,7 @@ export default function UserOnboardingForm() {
               </div>
             )}
           </div>
-          }
-
+          )}
         {isSubmitting && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-lg flex flex-col items-center justify-center z-50">
             <motion.div

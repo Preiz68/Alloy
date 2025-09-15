@@ -7,9 +7,6 @@ import { inputLikeSelectStyles } from "./sharedSelectStyle";
 
 const options = countryList().getData();
 
-// Shared style to match text inputs
-
-
 type Props = {
   control: any;
   name: string;
@@ -18,18 +15,22 @@ type Props = {
 export const CountrySelect = ({ control, name }: Props) => {
   return (
     <div className="w-full">
-      <label className="text-md font-medium mb-1 block text-white">Country*</label>
+      <label className="text-md font-medium mb-1 block text-white">
+        Country*
+      </label>
       <Controller
         name={name}
         control={control}
         render={({ field }) => (
           <Select
+            {...field}
             options={options}
             isSearchable
-            placeholder="Select your country"
-            value={options.find((opt: { label: string; value: string }) => opt.label === field.value)}
-            onChange={(val) => field.onChange(val?.label)}
-            styles={inputLikeSelectStyles} // <-- apply shared style
+            placeholder="Type/Select your country..."
+            value={options.find((opt) => opt.value === field.value) || null}
+            onChange={(val) => field.onChange(val?.value ?? "")} // ✅ normalize to string
+            styles={inputLikeSelectStyles}
+            menuPlacement="auto"
           />
         )}
       />

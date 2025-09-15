@@ -31,7 +31,7 @@ export default function ExperienceSelect({ control }: ExperienceSelectProps) {
           {...field}
           options={options}
           value={options.find((option) => option.value === field.value) || null}
-          onChange={(selected) => field.onChange(selected?.value)}
+          onChange={(selected) => field.onChange(selected?.value ?? "")}
           styles={inputLikeSelectStyles} // <-- apply unified styles
           placeholder="Select your experience level"
         />

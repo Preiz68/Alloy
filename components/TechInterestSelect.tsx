@@ -41,16 +41,16 @@ export default function TechInterestSelect({ control }: TechSelectProps) {
           isMulti
           options={options}
           value={
-            field.value?.map((val: string) => ({
-              value: val,
-              label: val,
-            })) || []
-          } // string[] → Option[]
+            field.value && Array.isArray(field.value)
+              ? field.value.map((val: string) => ({ value: val, label: val }))
+              : []
+          } // ✅ always normalize to Option[]
           onChange={(selected) =>
             field.onChange(selected ? selected.map((opt) => opt.value) : [])
-          } // Option[] → string[]
+          } // ✅ normalize back to string[]
           styles={inputLikeSelectStyles}
           placeholder="Select or type your interests..."
+          closeMenuOnSelect={false}
         />
       )}
     />

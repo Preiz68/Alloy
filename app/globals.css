@@ -19,17 +19,33 @@ input:-webkit-autofill:active {
 
 
 .Toastify__toast {
-  background: #121212 !important;
-  color: #fff;
+  background: #fff !important;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color:gray;
   backdrop-filter: blur(12px) !important;
   border-radius: 0.5rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display:flex;
    gap:7px;
-   padding:1rem;
+   padding:0.1rem;
   align-items:center;
+  justify-content:center;
 }
 
+
+.Toastify__toast--success {
+  color:green;
+}
+
+.Toastify__toast--error {
+  color:red;
+}
+
+.Toastify__progress-bar--success {
+  background: green; /* light green */
+}
+.Toastify__progress-bar--error {
+  background: red; /* light red */
+}
 
 

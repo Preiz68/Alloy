@@ -7,11 +7,10 @@ export const profileSchema = z.object({
   gender: z.enum(["male", "female"], { message: "Gender is required" }),
 
   age: z.string({ message: "Age is required" }),
-  country: z.string().min(1, "Country is required"),
+  country: z.string({message:"Country is required"}),
 
   techInterests: z
-    .array(z.string())
-    .min(1, { message: "Please select at least one interest" }),
+    .array(z.string(),{message: "Please select at least one interest" }),
   customInterest: z.string().optional(),
   hobbies: z.string().optional(),
 
@@ -21,7 +20,7 @@ export const profileSchema = z.object({
 
   stack: z
     .array(z.string().min(1, "Each stack must be a valid string"))
-    .min(1, "Please select at least one stack").optional(),
+    .min(1, {message:"Please select at least one stack"}).optional(),
 
   linkedInUrl: z
     .url("Enter a valid LinkedIn URL")
@@ -29,12 +28,10 @@ export const profileSchema = z.object({
     .or(z.literal("")),
 
   careerPath: z
-    .string()
-    .min(2, "Please describe your career path"),
-
+    .string({message:"Please describe your career path"}).min(2,"Your career should not bre under 2 characters"),
   bio: z
     .string()
-    .max(250, "Bio must be at most 250 characters")
+    .max(250, {message:"Bio must be at most 250 characters"})
     .optional(),
 });
 

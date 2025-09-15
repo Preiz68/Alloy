@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Toast Container for Notifications */}
         <ToastContainer
           position="top-right"
-          toastStyle={{ width:"230px",height:"30px" }}
+          toastStyle={{maxWidth:"250px"}}
           autoClose={3000} // closes after 3s
           hideProgressBar={false}
           newestOnTop={false}

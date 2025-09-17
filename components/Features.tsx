@@ -68,14 +68,14 @@ export default function Features() {
         variants={containerVariants}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
-        className="grid grid-cols-1 gap-20 px-10 md:px-20 mx-auto"
+        viewport={{ once: true, scale:0.2}}
+        className="grid grid-cols-1 gap-40 px-10 md:px-20 mx-auto"
       >
         {features.map((f, i) => (
           <motion.div
             key={i}
             variants={itemVariants}
-            className="bg-white/10 backdrop-blur-lg flex flex-col md:grid md:grid-cols-12 p-5 text-white shadow-lg hover:scale-105 transition"
+            className="bg-white/10 backdrop-blur-lg flex flex-col md:grid md:grid-cols-12 p-5 text-white shadow-lg"
           >
             <Image
               unoptimized

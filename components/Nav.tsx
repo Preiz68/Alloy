@@ -54,7 +54,7 @@ export default function Navbar() {
 
                 {/* Mobile Hamburger */}
                 <button
-                    className="md:hidden text-white fixed top-4 right-4"
+                    className="md:hidden text-white fixed top-4 right-4 z-60"
                     onClick={() => setOpen(!open)}
                     aria-expanded={open}
                     aria-controls="mobile-menu"
@@ -73,7 +73,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3 }}
-                        className="md:hidden flex flex-col items-center gap-6 py-6 bg-white/10 backdrop-blur-lg text-white border-t border-white/20"
+                        className="md:hidden w-full flex flex-col items-center gap-6 py-6 bg-white/10 backdrop-blur-lg text-white border-t border-white/20 fixed top-0 right-0 z-50"
                     >
                         <Link href="/" onClick={() => setOpen(false)}>
                             Home

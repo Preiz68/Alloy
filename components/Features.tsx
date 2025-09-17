@@ -68,7 +68,7 @@ export default function Features() {
         variants={containerVariants}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, scale:0.2}}
+        viewport={{ once: true, amount: 0.3 }}
         className="grid grid-cols-1 gap-40 px-10 md:px-20 mx-auto"
       >
         {features.map((f, i) => (

@@ -12,18 +12,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { FirebaseError } from "firebase/app";
-import { useEffect } from "react";
 import GoogleIcon from "../../../public/icons/googleicon.png";
 import GithubIcon from "../../../public/icons/githubicon.png";
-import dynamic from "next/dynamic";
+import { MdEmail,MdLock } from "react-icons/md";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-});
+})
 
-const MdEmail = dynamic(() => import("react-icons/md").then(mod => mod.MdEmail), { ssr: false });
-const MdLock = dynamic(() => import("react-icons/md").then(mod => mod.MdLock), { ssr: false });
 
 
 type LoginFormData = z.infer<typeof loginSchema>;

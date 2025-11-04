@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-
+@custom-variant dark (&:where(.dark, .dark *));
 
 
 /* Reset ugly yellow autofill styles */
@@ -16,6 +16,12 @@ input:-webkit-autofill:active {
 }
 
 
+.glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
 
 
 .Toastify__toast {

@@ -131,6 +131,8 @@ interface GroupState {
   createGroup: (
     data: Omit<Group, "id" | "createdAt" | "tasks">
   ) => Promise<void>;
+  editGroup: (groupId: string, data: Group | null) => Promise<void>;
+  deleteGroup: (groupId: string) => Promise<void>;
   addMember: (groupId: string, memberId: string) => Promise<void>;
   assignTask: (groupId: string, task: Task) => Promise<void>;
 }
@@ -395,6 +397,28 @@ export const useGroupStore = create<
 >((set, get) => ({
   groups: [],
   loading: false,
+  deleteGroup: async (groupId) => {
+    try {
+      await deleteDoc(doc(db, "groups", groupId));
+      set({ groups: get().groups.filter((group) => group.id !== groupId) });
+    } catch (error) {
+      console.error("❌ Error deleting group:", error);
+    }
+  },
+  editGroup: async (groupId, data) => {
+    if (!data) return;
+    try {
+      const groupRef = doc(db, "groups", groupId);
+      await updateDoc(groupRef, data);
+      set({
+        groups: get().groups.map((group) =>
+          group.id === groupId ? { ...group, ...data } : group
+        ),
+      });
+    } catch (error) {
+      console.error("❌ Error editing group:", error);
+    }
+  },
 
   // 🔹 Fetch all groups
   fetchGroups: async () => {

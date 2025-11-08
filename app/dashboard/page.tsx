@@ -12,10 +12,20 @@ import SidebarWidgets from "@/components/dashboard/RightbarWidget";
 import { useThemeStore } from "@/store/usePostStore";
 import { Sparkles, Flame, Filter, Compass, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import useAuth from "@/hooks/useAuth";
+import { redirect } from "next/navigation";
 
 const DashboardPage = () => {
   const [activeSection, setActiveSection] = useState("home");
   const { initializeTheme } = useThemeStore();
+
+  const user = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      redirect("/login");
+    }
+  }, [user]);
 
   const [filters] = useState([
     "Beginner Friendly",
@@ -155,20 +165,20 @@ const DashboardPage = () => {
             </div>
           </aside>
         );
-      case "projectGroup":
-        return (
-          <aside className="hidden lg:block lg:w-80 bg-white text-gray-800 p-4 shadow-lg border border-gray-200 backdrop-blur-md max-h-full h-screen mt-20 overflow-y-auto">
-            <div>
-              <ul>
-                {projects.map((project) => (
-                  <li className="text-gray-400" key={project}>
-                    #{project}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-        );
+      // case "projectGroup":
+      //   return (
+      //     <aside className="hidden lg:block lg:w-80 bg-white text-gray-800 p-4 shadow-lg border border-gray-200 backdrop-blur-md max-h-full h-screen mt-20 overflow-y-auto">
+      //       <div>
+      //         <ul>
+      //           {projects.map((project) => (
+      //             <li className="text-gray-400" key={project}>
+      //               #{project}
+      //             </li>
+      //           ))}
+      //         </ul>
+      //       </div>
+      //     </aside>
+      //   );
       default:
         break;
     }

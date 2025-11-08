@@ -9,35 +9,53 @@ import type { Group } from "@/store/usePostStore";
 interface GroupCreationModalProps {
   onClose: () => void;
   onCreate: (data: Omit<Group, "id" | "tasks" | "createdAt">) => Promise<void>;
+  isEditing: boolean;
 }
 
-const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
+const GroupCreationModal = ({
+  onClose,
+  onCreate,
+  isEditing,
+}: GroupCreationModalProps) => {
   const { user } = useAuth();
 
   // Form states
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [goal, setGoal] = useState("");
-  const [overview, setOverview] = useState("");
-  const [duration, setDuration] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [projectDetails, setProjectDetails] = useState({
+    name: "",
+    description: "",
+    overview: "",
+    goal: "",
+    duration: "",
+  });
+
+  const handleProjectDetailChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setProjectDetails((prevDetails) => ({ ...prevDetails, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !name.trim()) return;
+    if (!user || !projectDetails.name.trim())
+      console.log("❌ User not authenticated or invalid group name");
+
+    console.log("🚀 Creating group with details:", projectDetails);
 
     setLoading(true);
 
     const newGroup: Omit<Group, "id" | "tasks" | "createdAt"> = {
-      name,
-      description,
-      createdBy: user.uid,
-      adminId: user.uid,
-      members: [user.uid],
+      name: projectDetails.name,
+      description: projectDetails.description,
+      createdBy: user!.uid,
+      adminId: user!.uid,
+      members: [user!.uid],
       projectDetails: {
-        overview,
-        goal,
-        duration,
+        overview: projectDetails.overview,
+        goal: projectDetails.goal,
+        duration: projectDetails.duration,
       },
     };
 
@@ -76,8 +94,9 @@ const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
           <div>
             <label className="block text-sm font-medium mb-1">Group Name</label>
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="name"
+              value={projectDetails.name}
+              onChange={handleProjectDetailChange}
               className="w-full border rounded-lg p-2 text-sm bg-gray-50 dark:bg-gray-800"
               placeholder="e.g. Frontend Devs"
               required
@@ -90,8 +109,9 @@ const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
               Description
             </label>
             <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              name="description"
+              value={projectDetails.description}
+              onChange={handleProjectDetailChange}
               className="w-full border rounded-lg p-2 text-sm bg-gray-50 dark:bg-gray-800 resize-none"
               rows={3}
               placeholder="Describe what this group will focus on..."
@@ -104,8 +124,9 @@ const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
               Project Overview
             </label>
             <textarea
-              value={overview}
-              onChange={(e) => setOverview(e.target.value)}
+              name="overview"
+              value={projectDetails.overview}
+              onChange={handleProjectDetailChange}
               className="w-full border rounded-lg p-2 text-sm bg-gray-50 dark:bg-gray-800 resize-none"
               rows={2}
               placeholder="A brief summary of the project..."
@@ -118,8 +139,9 @@ const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
               Project Goal
             </label>
             <input
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
+              name="goal"
+              value={projectDetails.goal}
+              onChange={handleProjectDetailChange}
               className="w-full border rounded-lg p-2 text-sm bg-gray-50 dark:bg-gray-800"
               placeholder="e.g. Build a dev collaboration app"
             />
@@ -129,8 +151,9 @@ const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
           <div>
             <label className="block text-sm font-medium mb-1">Duration</label>
             <input
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
+              name="duration"
+              value={projectDetails.duration}
+              onChange={handleProjectDetailChange}
               className="w-full border rounded-lg p-2 text-sm bg-gray-50 dark:bg-gray-800"
               placeholder="e.g. 4 weeks or Oct–Nov 2025"
             />
@@ -142,7 +165,8 @@ const GroupCreationModal = ({ onClose, onCreate }: GroupCreationModalProps) => {
             disabled={loading}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-medium transition"
           >
-            {loading ? "Creating..." : "Create Group"}
+            {isEditing && loading ? "Updating..." : "Update"} ||{" "}
+            {!isEditing && loading ? "Creating..." : "Create Group"}
           </button>
         </form>
       </motion.div>

@@ -1,52 +1,98 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Bot, Send } from "lucide-react";
+import { Bot, Icon, MoreHorizontal, PlusCircle, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 import {
   useGroupStore,
   useCompletionStore,
   useNotificationStore,
   Group,
+  usePostsStore,
 } from "@/store/usePostStore";
 import {
+  Users,
+  Edit3,
+  Trash2,
+  ClipboardList,
   Plus,
   ArrowLeft,
-  Check,
-  MessageSquare,
+  Eye,
   Info,
-  ClipboardList,
 } from "lucide-react";
 import GroupCreationModal from "@/components/modals/GroupCreation";
 import TaskAssignmentModal from "@/components/modals/TaskAssignment";
 import ApprovalModal from "@/components/modals/ApprovalModal";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import DeleteGroupModal from "../modals/DeleteGroupModal";
+
+export const moreAdminOptions = [
+  {
+    id: "manageMembers",
+    label: "Manage Members",
+    icon: Users,
+    color: "#3B82F6", // blue-500
+  },
+  {
+    id: "editGroup",
+    label: "Edit Group",
+    icon: Edit3,
+    color: "#10B981", // emerald-500
+  },
+  {
+    id: "deleteGroup",
+    label: "Delete Group",
+    icon: Trash2,
+    color: "#EF4444", // red-500
+  },
+  {
+    id: "assignTask",
+    label: "Assign Task",
+    icon: ClipboardList,
+    color: "#F59E0B", // amber-500
+  },
+  {
+    id: "viewRequests",
+    label: "Completion Requests",
+    icon: Eye,
+    color: "#8B5CF6", // violet-500
+  },
+  {
+    id: "aboutGroup",
+    label: "About Group",
+    icon: Info,
+    color: "#06B6D4", // cyan-500
+  },
+];
 
 const ProjectGroupsSection = () => {
   const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [activeTab, setActiveTab] = useState<"tasks" | "chat" | "about">(
-    "tasks"
-  );
+  const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
 
   // Modals
   const [openGroupModal, setOpenGroupModal] = useState(false);
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Stores
-  const { groups, fetchGroups, assignTask, submitCompletion } = useGroupStore();
+  const { groups, assignTask, editGroup, deleteGroup } = useGroupStore();
   const { requests, fetchRequests, updateStatus } = useCompletionStore();
   const { sendNotification } = useNotificationStore();
 
   useEffect(() => {
-    if (!user) return;
-    fetchGroups();
-    fetchRequests();
-  }, [fetchGroups, fetchRequests]);
+    const fetch = async () => {
+      await useGroupStore.getState().fetchGroups();
+    };
+    fetch();
+  }, []);
 
   // Check if user is admin
   useEffect(() => {
@@ -69,82 +115,6 @@ const ProjectGroupsSection = () => {
 
   if (checkingAdmin)
     return <div className="p-6 text-center text-gray-500">Loading...</div>;
-
-  // 🔹 Group Card
-  const GroupCard = ({ group }: { group: Group }) => (
-    <motion.div
-      layout
-      whileHover={{ y: -6, boxShadow: "0 10px 30px rgba(2,6,23,0.08)" }}
-      onClick={() => setSelectedGroup(group)}
-      className="p-5 border rounded-2xl bg-white dark:bg-gray-900 cursor-pointer transition-all"
-    >
-      <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-        {group.name}
-      </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-        {group.description}
-      </p>
-      <div className="text-xs text-gray-400 mt-3">
-        {group.members?.length ?? 0} members
-      </div>
-    </motion.div>
-  );
-
-  // 🔹 Task Tab
-  const TaskTab = ({ group }: { group: Group }) => (
-    <div className="space-y-4 mt-4">
-      {group.tasks?.length ? (
-        group.tasks.map((task: any, idx: number) => (
-          <div
-            key={idx}
-            className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 flex justify-between items-center"
-          >
-            <div>
-              <h4 className="font-medium text-gray-800 dark:text-gray-100">
-                {task.title}
-              </h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {task.description}
-              </p>
-              <div className="text-xs mt-2">
-                Status:{" "}
-                <span
-                  className={`font-medium ${
-                    task.approved
-                      ? "text-green-600"
-                      : task.completed
-                      ? "text-yellow-600"
-                      : "text-gray-500"
-                  }`}
-                >
-                  {task.approved
-                    ? "Approved"
-                    : task.completed
-                    ? "Pending Review"
-                    : "Not Completed"}
-                </span>
-              </div>
-            </div>
-            {!task.completed && (
-              <button
-                onClick={() =>
-                  submitCompletion(group.id, task.id, user?.uid as string)
-                }
-                className="px-3 py-1 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
-              >
-                Mark Complete
-              </button>
-            )}
-          </div>
-        ))
-      ) : (
-        <div className="text-gray-500 text-sm">No tasks assigned yet.</div>
-      )}
-    </div>
-  );
-
-  // 🔹 Chat Tab
-  // 🧩 CHAT TAB with integrated AI Assist
 
   const ChatTab = () => {
     const [messages, setMessages] = useState<
@@ -278,107 +248,111 @@ User asked: ${prompt}`,
     );
   };
 
-  // 🔹 About Tab
-  const AboutTab = ({ group }: { group: Group }) => (
-    <div className="space-y-5">
-      <div>
-        <h4 className="font-semibold">Overview</h4>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          {group.projectDetails?.overview || "—"}
-        </p>
+  // 🔹 Group Card
+  const GroupCard = ({ group }: { group: Group }) => (
+    <motion.div
+      key={group.id}
+      layout
+      whileHover={{ y: -6, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300 }}
+      onClick={() => setSelectedGroup(group)}
+    >
+      <div className="relative">
+        <Image src="/Folder2.png" alt="folder" width={100} height={100} />
+        <PlusCircle size={20} className="absolute right-22 top-8" />
       </div>
-
-      <div>
-        <h4 className="font-semibold">Goal</h4>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          {group.projectDetails?.goal || "—"}
-        </p>
-      </div>
-
-      <div>
-        <h4 className="font-semibold">Duration</h4>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          {group.projectDetails?.duration || "—"}
-        </p>
-      </div>
-
-      <div>
-        <h4 className="font-semibold">Members</h4>
-        <ul className="text-sm text-gray-500 dark:text-gray-400 list-disc pl-5 mt-1 space-y-1">
-          {group.members?.length
-            ? group.members.map((m, i) => <li key={i}>{m}</li>)
-            : "No members yet"}
-        </ul>
-      </div>
-    </div>
+      <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+        {group.name}
+      </h3>
+    </motion.div>
   );
 
   // 🔹 Group Detail
   const GroupDetailPage = ({ group }: { group: Group }) => (
-    <motion.div
-      key={group.id}
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.2 }}
-      className="p-4"
-    >
-      <div className="rounded-2xl bg-gray-500 p-6 text-white shadow-md mb-6 flex justify-between items-start">
+    <motion.div className="p-4 shadow-md rounded-lg">
+      <div className="p-6 text-white bg-amber-950 mb-6 relative flex items-center justify-center">
+        <button
+          onClick={() => setSelectedGroup(null)}
+          className="bg-white/10 hover:bg-white/20 p-2 rounded-full absolute
+          top-4 left-4 flex items-center justify-center"
+        >
+          <ArrowLeft size={18} />
+          Back
+        </button>
         <div>
           <h2 className="text-2xl font-bold">{group.name}</h2>
           <p className="text-sm opacity-90 mt-1">{group.description}</p>
         </div>
-        <button
-          onClick={() => setSelectedGroup(null)}
-          className="bg-white/10 hover:bg-white/20 p-2 rounded-full"
+        <div
+          className="absolute
+          top-4 right-4 "
         >
-          <ArrowLeft size={18} />
-        </button>
-      </div>
-
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-4 border-b">
-          {["tasks", "chat", "about"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`flex items-center gap-2 pb-2 text-sm capitalize ${
-                activeTab === tab
-                  ? "border-b-2 border-purple-500 text-purple-600 font-medium"
-                  : "text-gray-500"
-              }`}
-            >
-              {tab === "tasks" && <ClipboardList size={15} />}
-              {tab === "chat" && <MessageSquare size={15} />}
-              {tab === "about" && <Info size={15} />}
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {isAdmin && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setOpenTaskModal(true)}
-              className="bg-blue-600 text-white px-4 py-1 rounded-md text-sm flex justify-center items-center"
-            >
-              Assign Task
-            </button>
-            <button
-              onClick={() => setOpenApprovalModal(true)}
-              className="bg-green-600 text-white px-4 py-1 rounded-md text-sm"
-            >
-              Review
-            </button>
+          <button
+            onClick={() => {
+              setIsMoreOptionsOpen((prev) => !prev);
+            }}
+            className="bg-white/10 hover:bg-white/20 p-2 rounded-full relative flex items-center justify-center"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+          <div className="absolute left-2 -bottom-24 translate-y-1/2 ml-3 z-70">
+            {isMoreOptionsOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="bg-white shadow-lg border border-gray-200 text-sm text-gray-800 w-44 py-2"
+              >
+                {isAdmin ? (
+                  <div>
+                    {moreAdminOptions.map(
+                      ({ id, label, icon: Icon, color }) => (
+                        <button
+                          onClick={() => {
+                            setIsMoreOptionsOpen(false);
+                            switch (id) {
+                              case "manageMembers":
+                                // Open manage members modal
+                                break;
+                              case "editGroup":
+                                setIsEditing(true);
+                                setEditingGroup(group);
+                                editGroup(id, editingGroup);
+                                setOpenGroupModal(true);
+                                break;
+                              case "deleteGroup":
+                                setDeleteModalOpen(true);
+                                break;
+                              case "aboutGroup":
+                                // Open about group modal
+                                break;
+                              case "assignTask":
+                                setOpenTaskModal(true);
+                                break;
+                              case "viewRequests":
+                                setOpenApprovalModal(true);
+                                break;
+                            }
+                          }}
+                          className="px-3 py-2 flex gap-2 hover:bg-purple-50 hover:text-blue-950 cursor-pointer transition-all duration-200 border-b-2 border-gray-300 last:border-b-0 w-full text-left"
+                          key={id}
+                        >
+                          <Icon size={15} color={color} />
+                          <span>{label}</span>
+                        </button>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div></div>
+                )}
+              </motion.div>
+            )}
           </div>
-        )}
+        </div>
       </div>
-
-      <div className="mt-4">
-        {activeTab === "tasks" && <TaskTab group={group} />}
-        {activeTab === "chat" && <ChatTab />}
-        {activeTab === "about" && <AboutTab group={group} />}
-      </div>
+      <ChatTab />
     </motion.div>
   );
 
@@ -402,14 +376,6 @@ User asked: ${prompt}`,
                 </p>
               </div>
               <div className="flex gap-2">
-                {isAdmin && (
-                  <button
-                    onClick={() => setOpenApprovalModal(true)}
-                    className="px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm border"
-                  >
-                    Review Requests
-                  </button>
-                )}
                 <button
                   onClick={() => setOpenGroupModal(true)}
                   className="px-3 py-2 rounded-md bg-purple-600 text-white flex items-center gap-2 shadow-sm"
@@ -419,7 +385,7 @@ User asked: ${prompt}`,
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {groups.length ? (
                 groups.map((g) => <GroupCard key={g.id} group={g} />)
               ) : (
@@ -436,6 +402,17 @@ User asked: ${prompt}`,
           <GroupCreationModal
             onClose={() => setOpenGroupModal(false)}
             onCreate={useGroupStore.getState().createGroup}
+            isEditing={isEditing}
+          />
+        )}
+
+        {deleteModalOpen && selectedGroup && (
+          <DeleteGroupModal
+            {...{
+              selectedGroup,
+              setSelectedGroup,
+              onClose: () => setDeleteModalOpen(false),
+            }}
           />
         )}
 
